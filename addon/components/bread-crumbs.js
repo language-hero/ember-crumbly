@@ -28,6 +28,7 @@ export default Component.extend({
   reverse: false,
   classNameBindings: ['breadCrumbClass'],
   hasBlock: bool('template').readOnly(),
+  routing: service('-routing'),
   currentUrl: readOnly('routerService.currentURL'),
   currentRouteName: readOnly('routerService.currentRouteName'),
 
@@ -80,7 +81,25 @@ export default Component.extend({
   },
 
   _lookupRoute(routeName) {
+    return this._lookupLocalRoute(routeName) || this._lookupEngineRoute(routeName);
+  },
+
+  _lookupLocalRoute(routeName) {
     return getOwner(this).lookup(`route:${routeName}`);
+  },
+
+  _lookupEngineRoute(routeName) {
+    const router = get(this, 'routing.router');
+
+    let engineInfo = router._engineInfoByRoute[routeName];
+
+    if (!engineInfo) {
+      return;
+    }
+
+    return router
+      ._getEngineInstance(engineInfo)
+      .lookup(`route:${engineInfo.localFullName}`);
   },
 
   _lookupBreadCrumb(routeNames, filteredRouteNames) {
